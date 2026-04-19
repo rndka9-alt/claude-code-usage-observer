@@ -51,6 +51,32 @@ fixtures/
 - Node.js 20+
 - pnpm 9+
 
+## Environment File
+
+All local ports and wrapper runtime endpoints are managed through `.env`.
+
+1. Create `.env` from the checked-in template.
+
+```bash
+cp .env.example .env
+```
+
+2. If any local port conflicts with another stack, edit only `.env`.
+
+Important fields:
+
+- `USAGE_OBSERVER_OTLP_HTTP_PORT`
+- `USAGE_OBSERVER_OTEL_HEALTHCHECK_PORT`
+- `USAGE_OBSERVER_INGEST_API_PORT`
+- `USAGE_OBSERVER_GRAFANA_PORT`
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+- `USAGE_OBSERVER_OTEL_HEALTHCHECK_URL`
+- `USAGE_OBSERVER_API_URL`
+- `USAGE_OBSERVER_API_HEALTH_URL`
+- `OBSERVED_CLAUDE_COMMAND`
+
+The wrapper and Docker Compose both read the same `.env`, so port changes stay in one place.
+
 ## Local Run
 
 1. Install dependencies.
@@ -59,42 +85,112 @@ fixtures/
 pnpm install
 ```
 
-2. Start the full local stack.
+2. Create or update `.env`.
+
+```bash
+cp .env.example .env
+```
+
+3. Start the full local stack.
 
 ```bash
 docker compose up --build
 ```
 
-3. Optional: run migrations outside Docker when developing locally.
+4. Optional: run migrations outside Docker when developing locally.
 
 ```bash
 pnpm db:migrate
 ```
 
-4. Open Grafana at `http://127.0.0.1:3000`.
+5. Open Grafana at the URL implied by `.env`, default `http://127.0.0.1:3000`.
 
 - user: `admin`
 - password: `admin`
 
-5. Health-check the API.
+6. Health-check the API.
 
 ```bash
-curl http://127.0.0.1:8080/v1/health
+source ./.env && curl "$USAGE_OBSERVER_API_HEALTH_URL"
+```
+
+7. Health-check the Collector itself.
+
+```bash
+source ./.env && curl "$USAGE_OBSERVER_OTEL_HEALTHCHECK_URL"
 ```
 
 ## Configure Claude Code OTLP Export
 
-Point Claude Code OTLP export at the Collector.
+The recommended path is to use the wrapper script instead of exporting OTEL variables by hand.
 
 ```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
-export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-export OTEL_METRICS_EXPORTER=otlp
-export OTEL_LOGS_EXPORTER=otlp
-export OTEL_TRACES_EXPORTER=otlp
+./scripts/run-observed-claude.sh
 ```
 
+The wrapper:
+
+- loads `.env`
+- checks that the Collector health endpoint responds
+- checks that the ingest-api health endpoint responds
+- exports OTEL runtime variables for the Claude process
+- preserves existing environment variables for downstream wrappers
+
+If you still want manual exports, load `.env` and export the standard OTEL variables from there.
+
 The Collector forwards raw metrics, logs, and traces to Prometheus, Loki, and Tempo. PostgreSQL is not used as a raw OTLP sink.
+
+## Wrapper Usage
+
+Default usage runs the command in `OBSERVED_CLAUDE_COMMAND`, which defaults to `claude`.
+
+```bash
+./scripts/run-observed-claude.sh
+```
+
+Pass normal Claude CLI arguments directly:
+
+```bash
+./scripts/run-observed-claude.sh --resume
+./scripts/run-observed-claude.sh --model claude-sonnet-4
+```
+
+Run a different Claude launcher:
+
+```bash
+./scripts/run-observed-claude.sh --command ../claude-code-with-emotion/bin/claude
+```
+
+Skip endpoint health checks only when intentionally working offline:
+
+```bash
+./scripts/run-observed-claude.sh --skip-health-check
+```
+
+If the wrapper reports that the Collector or ingest-api is unreachable, the fix is usually:
+
+```bash
+docker compose up --build
+```
+
+or editing `.env` so the URLs match the ports you actually exposed.
+
+## `claude-code-with-emotion` Compatibility
+
+The wrapper is compatible with `../claude-code-with-emotion/bin/claude` because it only adds OTEL and observer-related environment variables and then `exec`s the requested command.
+
+What stays intact:
+
+- existing `CLAUDE_WITH_EMOTION_*` environment variables
+- the emotion wrapper's prompt injection
+- helper binary resolution for `claude-status`, `claude-session-hook`, and related scripts when you target `../claude-code-with-emotion/bin/claude`
+- user-scope MCP usage that the emotion project already configured
+- hook settings injection when that project already provides `CLAUDE_WITH_EMOTION_HOOKS_SETTINGS_FILE`
+
+Caveat:
+
+- If you launch `../claude-code-with-emotion/bin/claude` directly from a plain shell, outside the Electron app bootstrap, the wrapper can provide `CLAUDE_WITH_EMOTION_ORIGINAL_PATH` fallback and helper-bin `PATH` setup so the real Claude binary and helper commands resolve, but it does not generate the Electron app's hook settings file for you.
+- In other words, the wrapper is compatible with `claude-code-with-emotion`, but it does not replace that app's own session bootstrap.
 
 ## Send Status Line Snapshots
 
@@ -139,6 +235,11 @@ The command stores only:
 - deterministic hash
 - enabled state
 - safe metadata JSON
+
+Current caveat:
+
+- the wrapper sets OTEL exports and health-checks the backend, but status line and context contributor submission still need an explicit sender integration path.
+- the current repo ships the sender and the endpoints, but it does not yet auto-wire session snapshot or contributor snapshot capture from the wrapper alone.
 
 ## API Endpoints
 

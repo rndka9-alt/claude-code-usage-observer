@@ -13,6 +13,10 @@ processors:
     limit_mib: 256
     spike_limit_mib: 64
 
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 exporters:
   prometheus:
     endpoint: 0.0.0.0:9464
@@ -26,6 +30,8 @@ exporters:
       insecure: true
 
 service:
+  extensions:
+    - health_check
   telemetry:
     logs:
       level: info
