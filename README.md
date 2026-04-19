@@ -63,6 +63,19 @@ cp .env.example .env
 
 2. If any local port conflicts with another stack, edit only `.env`.
 
+Default port map:
+
+- `20000` PostgreSQL
+- `20001` OTLP gRPC
+- `20002` OTLP HTTP
+- `20003` Collector Prometheus exporter
+- `20004` Collector health check
+- `20005` Prometheus
+- `20006` Loki
+- `20007` Tempo
+- `20008` ingest-api
+- `20009` Grafana
+
 Important fields:
 
 - `USAGE_OBSERVER_OTLP_HTTP_PORT`
@@ -103,7 +116,7 @@ docker compose up --build
 pnpm db:migrate
 ```
 
-5. Open Grafana at the URL implied by `.env`, default `http://127.0.0.1:3000`.
+5. Open Grafana at the URL implied by `.env`, default `http://127.0.0.1:20009`.
 
 - user: `admin`
 - password: `admin`
@@ -197,10 +210,10 @@ Caveat:
 Pipe Claude Code status line JSON into the sender script.
 
 ```bash
-cat fixtures/statusline/sample-statusline.json | \
-  USAGE_OBSERVER_API_URL=http://127.0.0.1:8080 \
-  USAGE_OBSERVER_AUTH_TOKEN=local-observer-token \
-  pnpm --filter @usage-observer/statusline-sender dev
+set -a
+source ./.env
+set +a
+cat fixtures/statusline/sample-statusline.json | pnpm --filter @usage-observer/statusline-sender dev
 ```
 
 The sender normalizes nested status line JSON into the ingest-api payload shape and adds a capture timestamp when one is missing.
@@ -210,8 +223,9 @@ The sender normalizes nested status line JSON into the ingest-api payload shape 
 Use the same sender package with the `context` subcommand.
 
 ```bash
-USAGE_OBSERVER_API_URL=http://127.0.0.1:8080 \
-USAGE_OBSERVER_AUTH_TOKEN=local-observer-token \
+set -a
+source ./.env
+set +a
 pnpm --filter @usage-observer/statusline-sender dev -- context \
   --session-id session-alpha \
   --project-root /workspace/project-alpha \
