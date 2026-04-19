@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const rawUsageEventsQuery = '{service_name=~".+"} |= "\\"event_type\\""';
+const rawUsageEventsQuery = '{exporter="OTLP"}';
 
 const lokiResponseSchema = z.object({
   status: z.literal('success'),

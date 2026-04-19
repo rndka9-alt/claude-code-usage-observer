@@ -2,12 +2,11 @@ import {
   createRangeBounds,
   deriveContributorImpactRollups,
   derivePromptFacts,
-  deriveToolImpactRollups,
-  rawUsageEventSchema
+  deriveToolImpactRollups
 } from '@usage-observer/domain';
 import type { RawUsageEvent, UsageDatabase } from '@usage-observer/domain';
 
-import { fetchRawUsageEvents } from '../loki-source/index.js';
+import { fetchRawUsageEvents, normalizeRawUsageEvent } from '../loki-source/index.js';
 import { createRollupStore } from '../rollup-store/index.js';
 
 function createDateBucket(timestamp: Date): string {
@@ -31,10 +30,10 @@ export function parseRawUsageEvents(rawEvents: unknown[]): RawUsageEvent[] {
   let skippedEventCount = 0;
 
   for (const rawEvent of rawEvents) {
-    const parsedEvent = rawUsageEventSchema.safeParse(rawEvent);
+    const parsedEvent = normalizeRawUsageEvent(rawEvent);
 
-    if (parsedEvent.success) {
-      parsedRawEvents.push(parsedEvent.data);
+    if (parsedEvent !== null) {
+      parsedRawEvents.push(parsedEvent);
       continue;
     }
 

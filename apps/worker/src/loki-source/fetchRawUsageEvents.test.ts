@@ -22,7 +22,7 @@ describe('fetchRawUsageEvents', () => {
       const requestUrl =
         input instanceof URL ? input : new URL(typeof input === 'string' ? input : input.url);
 
-      expect(requestUrl.searchParams.get('query')).toBe('{service_name=~".+"} |= "\\"event_type\\""');
+      expect(requestUrl.searchParams.get('query')).toBe('{exporter="OTLP"}');
 
       return createSuccessResponse({
         status: 'success',
