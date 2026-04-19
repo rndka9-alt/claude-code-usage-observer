@@ -12,7 +12,7 @@ Usage:
   ./scripts/run-observed-claude.sh [wrapper-options] [claude-args...]
 
 Wrapper options:
-  --command <path>        Override OBSERVED_CLAUDE_COMMAND for this run.
+  --command <path>        Run a different Claude launcher for this run.
   --skip-health-check     Do not probe collector or ingest-api before launch.
   --help                  Show this message.
 
@@ -69,7 +69,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-TARGET_COMMAND="${COMMAND_OVERRIDE:-${OBSERVED_CLAUDE_COMMAND:-claude}}"
+TARGET_COMMAND="${COMMAND_OVERRIDE:-claude}"
 
 require_env() {
   local key="$1"

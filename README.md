@@ -86,7 +86,6 @@ Important fields:
 - `USAGE_OBSERVER_OTEL_HEALTHCHECK_URL`
 - `USAGE_OBSERVER_API_URL`
 - `USAGE_OBSERVER_API_HEALTH_URL`
-- `OBSERVED_CLAUDE_COMMAND`
 
 The wrapper and Docker Compose both read the same `.env`, so port changes stay in one place.
 
@@ -155,7 +154,7 @@ The Collector forwards raw metrics, logs, and traces to Prometheus, Loki, and Te
 
 ## Wrapper Usage
 
-Default usage runs the command in `OBSERVED_CLAUDE_COMMAND`, which defaults to `claude`.
+Default usage runs `claude`.
 
 ```bash
 ./scripts/run-observed-claude.sh
@@ -168,7 +167,7 @@ Pass normal Claude CLI arguments directly:
 ./scripts/run-observed-claude.sh --model claude-sonnet-4
 ```
 
-Run a different Claude launcher:
+Run a different Claude launcher only when you intentionally want to bypass the default `claude` resolution:
 
 ```bash
 ./scripts/run-observed-claude.sh --command ../claude-code-with-emotion/bin/claude
