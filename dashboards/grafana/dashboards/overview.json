@@ -7,8 +7,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "usage-postgres"
+        "type": "prometheus",
+        "uid": "usage-prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -35,12 +35,12 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "usage-postgres"
+            "type": "prometheus",
+            "uid": "usage-prometheus"
           },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "select $__timeGroupAlias(captured_at, '1h'), max(total_cost_usd) as total_cost_usd from session_snapshots where $__timeFilter(captured_at) group by 1 order by 1"
+          "expr": "sum(increase(claude_code_cost_usage_USD_total[$__rate_interval]))",
+          "legendFormat": "cost_usd",
+          "refId": "A"
         }
       ],
       "title": "Cost Over Time",
@@ -48,8 +48,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "usage-postgres"
+        "type": "prometheus",
+        "uid": "usage-prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -76,12 +76,39 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "usage-postgres"
+            "type": "prometheus",
+            "uid": "usage-prometheus"
           },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "select $__timeGroupAlias(captured_at, '1h'), max(total_input_tokens) as input_tokens, max(total_output_tokens) as output_tokens, max(cache_read_input_tokens) as cache_read_tokens from session_snapshots where $__timeFilter(captured_at) group by 1 order by 1"
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"input\"}[$__rate_interval]))",
+          "legendFormat": "input_tokens",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "usage-prometheus"
+          },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"output\"}[$__rate_interval]))",
+          "legendFormat": "output_tokens",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "usage-prometheus"
+          },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__rate_interval]))",
+          "legendFormat": "cache_read_tokens",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "usage-prometheus"
+          },
+          "expr": "sum(increase(claude_code_token_usage_tokens_total{type=\"cacheCreation\"}[$__rate_interval]))",
+          "legendFormat": "cache_creation_tokens",
+          "refId": "D"
         }
       ],
       "title": "Input Output Cache Tokens Over Time",
@@ -89,8 +116,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "usage-postgres"
+        "type": "prometheus",
+        "uid": "usage-prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -121,12 +148,12 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "usage-postgres"
+            "type": "prometheus",
+            "uid": "usage-prometheus"
           },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "select count(*) as session_count from sessions where $__timeFilter(last_seen_at)"
+          "expr": "count(count by (session_id) (claude_code_active_time_seconds_total{type=\"cli\"}))",
+          "instant": true,
+          "refId": "A"
         }
       ],
       "title": "Session Count",
@@ -252,8 +279,8 @@
             "type": "prometheus",
             "uid": "usage-prometheus"
           },
-          "expr": "sum(rate(otelcol_receiver_accepted_log_records[5m]))",
-          "legendFormat": "accepted_log_records",
+          "expr": "sum(increase(claude_code_active_time_seconds_total{type=\"cli\"}[$__rate_interval]))",
+          "legendFormat": "cli_active_time_seconds",
           "refId": "A"
         },
         {
@@ -261,12 +288,12 @@
             "type": "prometheus",
             "uid": "usage-prometheus"
           },
-          "expr": "sum(rate(otelcol_receiver_accepted_spans[5m]))",
-          "legendFormat": "accepted_spans",
+          "expr": "sum(increase(claude_code_active_time_seconds_total{type=\"user\"}[$__rate_interval]))",
+          "legendFormat": "user_active_time_seconds",
           "refId": "B"
         }
       ],
-      "title": "Collector Ingest Rate",
+      "title": "Active Time Over Time",
       "type": "timeseries"
     }
   ],
