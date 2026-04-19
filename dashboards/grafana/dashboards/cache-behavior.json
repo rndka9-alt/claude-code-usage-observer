@@ -1,0 +1,187 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select $__timeGroupAlias(captured_at, '1h'), max(cache_read_input_tokens) as cache_read_tokens, max(cache_creation_input_tokens) as cache_creation_tokens from session_snapshots where $__timeFilter(captured_at) group by 1 order by 1"
+        }
+      ],
+      "title": "Cache Read Vs Cache Creation Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select prompt_id, idle_gap_before_ms, cache_efficiency_score, total_cache_read_tokens, total_cache_creation_tokens from derived_prompt_facts where $__timeFilter(prompt_started_at) order by idle_gap_before_ms desc limit 200"
+        }
+      ],
+      "title": "Idle Gap Length Vs Cache Efficiency",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cache_read_tokens, total_cache_creation_tokens, total_cost_usd from derived_prompt_facts where $__timeFilter(prompt_started_at) and idle_gap_before_ms > 600000 and total_cache_read_tokens = 0 and total_cache_creation_tokens > 0 order by prompt_started_at desc limit 200"
+        }
+      ],
+      "title": "Resume Like Pattern Detection",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cost_usd from derived_prompt_facts where $__timeFilter(prompt_started_at) and idle_gap_before_ms > 300000 order by total_cost_usd desc limit 100"
+        }
+      ],
+      "title": "Cost Spikes After Idle Gap",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select session_id, prompt_id, prompt_started_at, total_cache_read_tokens, total_cache_creation_tokens, cache_efficiency_score from derived_prompt_facts where $__timeFilter(prompt_started_at) and total_cache_read_tokens < 10 and total_cache_creation_tokens > 1000 order by total_cache_creation_tokens desc limit 100"
+        }
+      ],
+      "title": "Cache Miss Looking Prompts",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "claude-code",
+    "usage-observer"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Cache Behavior",
+  "uid": "usage-cache-behavior",
+  "version": 1
+}

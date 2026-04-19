@@ -1,0 +1,38 @@
+{
+  "session_id": "session-alpha",
+  "captured_at": "2026-04-19T00:00:00.000Z",
+  "project_root": "/workspace/project-alpha",
+  "git_branch": "main",
+  "transcript_path": "/workspace/project-alpha/.claude/transcript.jsonl",
+  "model_name": "claude-sonnet-4",
+  "source": "context-snapshot",
+  "contributors": [
+    {
+      "contributor_type": "claude_md",
+      "contributor_name": "/workspace/project-alpha/AGENTS.md",
+      "contributor_scope": "project",
+      "contributor_hash": "claude-hash",
+      "file_path": "/workspace/project-alpha/AGENTS.md",
+      "file_size_bytes": 1024,
+      "line_count": 50,
+      "enabled": true,
+      "metadata_json": {
+        "file_path": "/workspace/project-alpha/AGENTS.md"
+      }
+    },
+    {
+      "contributor_type": "skill",
+      "contributor_name": "coding-guidelines",
+      "contributor_scope": "session",
+      "contributor_hash": "skill-hash",
+      "file_path": null,
+      "file_size_bytes": null,
+      "line_count": null,
+      "enabled": true,
+      "metadata_json": {
+        "activated_at": "2026-04-19T00:00:00.000Z",
+        "skill_name": "coding-guidelines"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Claude Code Usage Observer
+    orgId: 1
+    folder: Claude Code Usage Observer
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

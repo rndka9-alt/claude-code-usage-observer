@@ -1,0 +1,178 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select width_bucket(total_cost_usd, 0, greatest((select max(total_cost_usd) from derived_prompt_facts where $__timeFilter(prompt_started_at)), 0.000001), 10) as cost_bucket, count(*) as prompt_count from derived_prompt_facts where $__timeFilter(prompt_started_at) group by 1 order by 1"
+        }
+      ],
+      "title": "Prompt Cost Distribution",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select session_id, prompt_id, prompt_started_at, total_cost_usd, total_input_tokens, total_output_tokens, tool_call_count, idle_gap_before_ms from derived_prompt_facts where $__timeFilter(prompt_started_at) order by total_cost_usd desc limit 50"
+        }
+      ],
+      "title": "Top Expensive Prompts",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select date_bucket, tool_name, prompt_count, avg_prompt_cost_usd, avg_prompt_input_tokens, avg_prompt_output_tokens, avg_tool_duration_ms, avg_tool_result_size_bytes, error_rate from derived_tool_impact where date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_prompt_cost_usd desc, error_rate desc limit 200"
+        }
+      ],
+      "title": "Tool Impact Table",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select tool_name, avg_tool_result_size_bytes, avg_tool_duration_ms, prompt_count from derived_tool_impact where date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_tool_result_size_bytes desc limit 50"
+        }
+      ],
+      "title": "Large Result Size Tools",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select tool_name, error_rate, avg_prompt_cost_usd, avg_tool_duration_ms, prompt_count from derived_tool_impact where date_bucket between $__timeFrom()::date and $__timeTo()::date order by error_rate desc, avg_prompt_cost_usd desc limit 50"
+        }
+      ],
+      "title": "Error Prone Tools",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "claude-code",
+    "usage-observer"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Prompt & Tool Impact",
+  "uid": "usage-prompt-tool-impact",
+  "version": 1
+}

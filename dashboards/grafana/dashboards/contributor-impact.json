@@ -1,0 +1,178 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select contributor_type, round(avg(avg_prompt_cost_usd)::numeric, 6) as avg_prompt_cost_usd, round(avg(cache_hit_rate)::numeric, 4) as avg_cache_hit_rate, sum(prompt_count) as prompt_count from derived_contributor_impact where date_bucket between $__timeFrom()::date and $__timeTo()::date group by contributor_type order by avg_prompt_cost_usd desc"
+        }
+      ],
+      "title": "Contributor Type Comparison",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select contributor_name, contributor_type, avg_prompt_cost_usd, avg_prompt_input_tokens, avg_prompt_output_tokens, cache_hit_rate, prompt_count from derived_contributor_impact where date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_prompt_cost_usd desc limit 100"
+        }
+      ],
+      "title": "Contributor Name Comparison",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select contributor_name, avg_prompt_cost_usd, prompt_count, notes from derived_contributor_impact where contributor_type = 'mcp_server' and date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_prompt_cost_usd desc limit 50"
+        }
+      ],
+      "title": "MCP Correlation",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select contributor_name, avg_prompt_cost_usd, prompt_count, notes from derived_contributor_impact where contributor_type = 'skill' and date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_prompt_cost_usd desc limit 50"
+        }
+      ],
+      "title": "Skill Correlation",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select contributor_type, contributor_name, avg_prompt_cost_usd, prompt_count, notes from derived_contributor_impact where contributor_type in ('rule', 'claude_md', 'output_style', 'auto_memory') and date_bucket between $__timeFrom()::date and $__timeTo()::date order by avg_prompt_cost_usd desc limit 100"
+        }
+      ],
+      "title": "Rules CLAUDE Output Style Correlation",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "claude-code",
+    "usage-observer"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Contributor Impact",
+  "uid": "usage-contributor-impact",
+  "version": 1
+}

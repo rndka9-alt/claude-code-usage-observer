@@ -1,0 +1,21 @@
+{
+  "name": "claude-code-usage-observer",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm typecheck && pnpm --filter @usage-observer/domain build && pnpm -r test",
+    "db:migrate": "pnpm --filter @usage-observer/domain drizzle:migrate",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down -v"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/pg": "^8.11.11",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

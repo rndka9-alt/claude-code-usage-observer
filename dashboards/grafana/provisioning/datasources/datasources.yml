@@ -1,0 +1,39 @@
+apiVersion: 1
+
+datasources:
+  - name: Usage Observer PostgreSQL
+    uid: usage-postgres
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: usage_observer
+    jsonData:
+      database: usage_observer
+      postgresVersion: 1600
+      sslmode: disable
+      timescaledb: false
+    secureJsonData:
+      password: usage_observer
+
+  - name: Usage Observer Prometheus
+    uid: usage-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+
+  - name: Usage Observer Loki
+    uid: usage-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+
+  - name: Usage Observer Tempo
+    uid: usage-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: usage-loki
+      tracesToMetrics:
+        datasourceUid: usage-prometheus

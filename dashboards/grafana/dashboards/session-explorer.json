@@ -1,0 +1,206 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select session_id, first_seen_at, last_seen_at, project_root, git_branch, transcript_path, model_name from sessions where $__timeFilter(last_seen_at) order by last_seen_at desc limit 200"
+        }
+      ],
+      "title": "Session List",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select $__time(captured_at), total_cost_usd, used_percentage from session_snapshots where session_id = '${sessionId}' and $__timeFilter(captured_at) order by captured_at"
+        }
+      ],
+      "title": "Selected Session Snapshot Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select prompt_id, prompt_started_at, prompt_finished_at, total_cost_usd, total_input_tokens, total_output_tokens, tool_call_count, idle_gap_before_ms, cache_efficiency_score from derived_prompt_facts where session_id = '${sessionId}' and $__timeFilter(prompt_started_at) order by prompt_started_at desc limit 500"
+        }
+      ],
+      "title": "Selected Session Prompt Facts",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select prompt_id, prompt_started_at, idle_gap_before_ms from derived_prompt_facts where session_id = '${sessionId}' and idle_gap_before_ms is not null and $__timeFilter(prompt_started_at) order by idle_gap_before_ms desc limit 100"
+        }
+      ],
+      "title": "Idle Gap Markers",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select prompt_id, total_cache_read_tokens, total_cache_creation_tokens, cache_efficiency_score from derived_prompt_facts where session_id = '${sessionId}' and $__timeFilter(prompt_started_at) order by prompt_started_at desc limit 100"
+        }
+      ],
+      "title": "Cache Hit Miss Indicators",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "claude-code",
+    "usage-observer"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "postgres",
+          "uid": "usage-postgres"
+        },
+        "definition": "select session_id as __value, session_id as __text from sessions order by last_seen_at desc limit 200",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Session",
+        "multi": false,
+        "name": "sessionId",
+        "options": [],
+        "query": "select session_id as __value, session_id as __text from sessions order by last_seen_at desc limit 200",
+        "refresh": 1,
+        "skipUrlSync": false,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Session Explorer",
+  "uid": "usage-session-explorer",
+  "version": 1
+}

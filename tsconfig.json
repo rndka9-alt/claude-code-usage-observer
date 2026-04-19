@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/usage-observer-domain"
+    },
+    {
+      "path": "./apps/ingest-api"
+    },
+    {
+      "path": "./apps/worker"
+    },
+    {
+      "path": "./scripts/statusline-sender"
+    }
+  ]
+}

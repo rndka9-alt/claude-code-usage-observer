@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: usage_observer
+      POSTGRES_USER: usage_observer
+      POSTGRES_PASSWORD: usage_observer
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U usage_observer -d usage_observer
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.100.0
+    command:
+      - --config=/etc/otelcol-contrib/config.yaml
+    depends_on:
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "9464:9464"
+    volumes:
+      - ./infra/docker/otel/collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+
+  prometheus:
+    image: prom/prometheus:v2.53.3
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    depends_on:
+      otel-collector:
+        condition: service_started
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  loki:
+    image: grafana/loki:3.0.0
+    command:
+      - -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./infra/docker/loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    command:
+      - -config.file=/etc/tempo/config.yml
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./infra/docker/tempo/config.yml:/etc/tempo/config.yml:ro
+      - tempo-data:/var/tempo
+
+  ingest-api:
+    build:
+      context: .
+      dockerfile: apps/ingest-api/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://usage_observer:usage_observer@postgres:5432/usage_observer
+      INGEST_API_AUTH_TOKEN: local-observer-token
+      RUN_MIGRATIONS: "true"
+    ports:
+      - "8080:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      loki:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://usage_observer:usage_observer@postgres:5432/usage_observer
+      LOKI_BASE_URL: http://loki:3100
+      LOOKBACK_RANGE: 7d
+      ROLLUP_INTERVAL_MS: "300000"
+
+  grafana:
+    image: grafana/grafana:11.1.5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dashboards/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  grafana-data:
+  loki-data:
+  postgres-data:
+  prometheus-data:
+  tempo-data:
