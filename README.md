@@ -11,6 +11,29 @@ Local-first observability MVP for Claude Code usage. The stack separates raw tel
 - TypeScript worker computes prompt, tool, and contributor impact rollups
 - Grafana provides the MVP dashboards
 
+## Shell Shortcut
+
+If you want to launch the observed Claude wrapper without typing the repo path every time, add this function to `~/.zshrc` and replace `/path/to/claude-code-usage-observer` with your local clone path:
+
+```zsh
+oclaude() {
+  "/path/to/claude-code-usage-observer/scripts/run-observed-claude.sh" "$@"
+}
+```
+
+Apply the change in your current shell:
+
+```bash
+source ~/.zshrc
+```
+
+Then launch Claude with:
+
+```bash
+oclaude
+oclaude --resume
+```
+
 ## What This Stores
 
 This repository intentionally stores metadata only:
