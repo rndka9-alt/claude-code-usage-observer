@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const rawUsageEventsQuery = '{service_name=~".+"} |= "\\"event_type\\""';
+
 const lokiResponseSchema = z.object({
   status: z.literal('success'),
   data: z.object({
@@ -38,7 +40,7 @@ export async function fetchRawUsageEvents(input: {
   startAt: Date;
 }): Promise<unknown[]> {
   const requestUrl = new URL('/loki/api/v1/query_range', input.lokiBaseUrl);
-  requestUrl.searchParams.set('query', '{}');
+  requestUrl.searchParams.set('query', rawUsageEventsQuery);
   requestUrl.searchParams.set('direction', 'forward');
   requestUrl.searchParams.set('limit', '5000');
   requestUrl.searchParams.set('start', toNanoseconds(input.startAt));

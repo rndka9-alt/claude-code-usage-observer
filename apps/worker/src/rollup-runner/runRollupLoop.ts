@@ -26,6 +26,28 @@ function collectAffectedDateBuckets(rawEvents: RawUsageEvent[]): string[] {
   });
 }
 
+export function parseRawUsageEvents(rawEvents: unknown[]): RawUsageEvent[] {
+  const parsedRawEvents: RawUsageEvent[] = [];
+  let skippedEventCount = 0;
+
+  for (const rawEvent of rawEvents) {
+    const parsedEvent = rawUsageEventSchema.safeParse(rawEvent);
+
+    if (parsedEvent.success) {
+      parsedRawEvents.push(parsedEvent.data);
+      continue;
+    }
+
+    skippedEventCount += 1;
+  }
+
+  if (skippedEventCount > 0) {
+    console.warn(`worker: skipped ${skippedEventCount} non-usage JSON log events from Loki`);
+  }
+
+  return parsedRawEvents;
+}
+
 async function runRollupCycle(input: {
   database: UsageDatabase;
   lokiBaseUrl: string;
@@ -37,7 +59,7 @@ async function runRollupCycle(input: {
     endAt: rangeBounds.endAt,
     lokiBaseUrl: input.lokiBaseUrl
   });
-  const parsedRawEvents = rawEvents.map((rawEvent) => rawUsageEventSchema.parse(rawEvent));
+  const parsedRawEvents = parseRawUsageEvents(rawEvents);
   const promptFacts = derivePromptFacts(parsedRawEvents);
   const rollupStore = createRollupStore(input.database);
 
