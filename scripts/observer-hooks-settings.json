@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$USAGE_OBSERVER_REPO_ROOT/scripts/hooks/observer-stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$USAGE_OBSERVER_REPO_ROOT/scripts/hooks/observer-statusline.sh",
+    "refreshInterval": 1
+  }
+}
