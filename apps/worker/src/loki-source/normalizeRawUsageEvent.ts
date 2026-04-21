@@ -36,6 +36,7 @@ const knownAttributeKeys = new Set([
   'cache_creation_tokens',
   'cache_read_input_tokens',
   'cache_read_tokens',
+  'connection_status',
   'cost_usd',
   'duration_ms',
   'event.name',
@@ -60,6 +61,9 @@ const knownAttributeKeys = new Set([
   'session.id',
   'sessionId',
   'session_id',
+  'skill.name',
+  'skill.source',
+  'skill_name',
   'source',
   'source_type',
   'span.id',
@@ -221,7 +225,7 @@ function normalizeTimestamp(candidateRecords: Record<string, unknown>[]): string
   return parsedTimestamp.data;
 }
 
-function normalizeEventType(rawEventName: string): RawUsageEvent['event_type'] | null {
+function normalizeEventType(rawEventName: string): string | null {
   switch (rawEventName) {
     case 'prompt.started':
     case 'claude_code.user_prompt':
@@ -239,6 +243,12 @@ function normalizeEventType(rawEventName: string): RawUsageEvent['event_type'] |
     case 'claude_code.tool_result':
     case 'tool_result':
       return 'tool.executed';
+    case 'claude_code.skill_activated':
+    case 'skill_activated':
+      return 'skill.activated';
+    case 'claude_code.mcp_server_connection':
+    case 'mcp_server_connection':
+      return 'mcp.server_connection';
     default:
       return null;
   }
@@ -408,6 +418,7 @@ export function normalizeRawUsageEventWithDiagnostics(rawEvent: unknown): RawUsa
       'attributes_tool_name'
     ]),
     mcp_server_name: readString(candidateRecords, ['mcp_server_name']),
+    skill_name: readString(candidateRecords, ['skill_name', 'skill.name']),
     source_type: readString(candidateRecords, ['source_type', 'source', 'attributes_source']) ?? 'claude_code',
     input_tokens: readNumber(candidateRecords, ['input_tokens', 'attributes_input_tokens']),
     output_tokens: readNumber(candidateRecords, ['output_tokens', 'attributes_output_tokens']),

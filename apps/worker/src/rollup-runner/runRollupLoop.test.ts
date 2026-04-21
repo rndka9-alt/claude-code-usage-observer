@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { parseRawUsageEvents } from './runRollupLoop.js';
+import { parseRawUsageEvents } from './parseRawUsageEvents.js';
 
 describe('parseRawUsageEvents', () => {
   it('keeps valid usage events and skips unrelated JSON logs', () => {

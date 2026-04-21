@@ -34,8 +34,10 @@ export {
   deriveContributorImpactRollups,
   derivePromptFacts,
   deriveToolImpactRollups,
+  EVENT_TYPES,
   rawUsageEventSchema
 } from './analytics/index.js';
 export type {
+  EventType,
   RawUsageEvent
 } from './analytics/index.js';

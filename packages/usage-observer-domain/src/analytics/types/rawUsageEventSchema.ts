@@ -5,7 +5,7 @@ export const rawUsageEventSchema = z
     timestamp: z.string().datetime({
       offset: true
     }),
-    event_type: z.enum(['prompt.started', 'prompt.finished', 'api.request', 'tool.executed']),
+    event_type: z.string().min(1),
     session_id: z.string().min(1),
     prompt_id: z.string().min(1).nullable().optional(),
     trace_id: z.string().min(1).nullable().optional(),
@@ -16,6 +16,7 @@ export const rawUsageEventSchema = z
     model_name: z.string().min(1).nullable().optional(),
     tool_name: z.string().min(1).nullable().optional(),
     mcp_server_name: z.string().min(1).nullable().optional(),
+    skill_name: z.string().min(1).nullable().optional(),
     source_type: z.string().min(1).nullable().optional(),
     input_tokens: z.number().int().nonnegative().nullable().optional(),
     output_tokens: z.number().int().nonnegative().nullable().optional(),
