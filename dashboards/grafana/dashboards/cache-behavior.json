@@ -83,35 +83,6 @@
         "x": 0,
         "y": 8
       },
-      "id": 3,
-      "options": {
-        "showHeader": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "usage-postgres"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cache_read_tokens, total_cache_creation_tokens, total_cost_usd from derived_prompt_facts where $__timeFilter(prompt_started_at) and idle_gap_before_ms > 600000 and total_cache_read_tokens = 0 and total_cache_creation_tokens > 0 order by prompt_started_at desc limit 200"
-        }
-      ],
-      "title": "Resume Like Pattern Detection",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "usage-postgres"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
       "id": 4,
       "options": {
         "showHeader": true
@@ -124,10 +95,10 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cost_usd from derived_prompt_facts where $__timeFilter(prompt_started_at) and idle_gap_before_ms > 300000 order by total_cost_usd desc limit 100"
+          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cache_read_tokens, total_cache_creation_tokens, cache_efficiency_score, total_cost_usd from derived_prompt_facts where $__timeFilter(prompt_started_at) and cache_efficiency_score < 0.1 and total_cache_creation_tokens > 100 order by total_cost_usd desc limit 200"
         }
       ],
-      "title": "Cost Spikes After Idle Gap",
+      "title": "Cache Miss Prompts",
       "type": "table"
     },
     {
@@ -137,8 +108,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 24,
+        "x": 0,
         "y": 16
       },
       "id": 5,
@@ -153,10 +124,10 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "select session_id, prompt_id, prompt_started_at, total_cache_read_tokens, total_cache_creation_tokens, cache_efficiency_score from derived_prompt_facts where $__timeFilter(prompt_started_at) and total_cache_read_tokens < 10 and total_cache_creation_tokens > 1000 order by total_cache_creation_tokens desc limit 100"
+          "rawSql": "select session_id, prompt_id, prompt_started_at, idle_gap_before_ms, total_cost_usd, total_cache_read_tokens, total_cache_creation_tokens, cache_efficiency_score from derived_prompt_facts where $__timeFilter(prompt_started_at) and idle_gap_before_ms > 300000 order by total_cost_usd desc limit 100"
         }
       ],
-      "title": "Cache Miss Looking Prompts",
+      "title": "Cost Spikes After Idle Gap",
       "type": "table"
     }
   ],
