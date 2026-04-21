@@ -10,9 +10,15 @@ export type {
 export {
   statuslineSnapshotPayloadSchema
 } from './statuslineSnapshotPayloadSchema.js';
+export {
+  sessionTurnDetailsPayloadSchema
+} from './sessionTurnDetailsPayloadSchema.js';
 export type {
   ContextSnapshotsPayload
 } from './contextSnapshotsPayloadSchema.js';
+export type {
+  SessionTurnDetailsPayload
+} from './sessionTurnDetailsPayloadSchema.js';
 export type {
   StatuslineSnapshotPayload
 } from './statuslineSnapshotPayloadSchema.js';

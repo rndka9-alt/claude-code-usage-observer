@@ -4,5 +4,6 @@ export {
   derivedPromptFacts,
   derivedToolImpact,
   sessions,
-  sessionSnapshots
+  sessionSnapshots,
+  sessionTurnDetails
 } from './schema.js';

@@ -27,6 +27,12 @@ derived_contributor_impact
   Source: derived_prompt_facts + context_snapshots (DB + Loki-synthesized)
   Derived by: worker -> contributorImpactPipeline, date-bucketed replace
   Correlation only: matches prompt to the latest context snapshot before prompt start
+
+session_turn_details
+  Source: transcript file, parsed at SessionEnd by hook
+  Ingested via: POST /v1/session-turn-details
+  One row per assistant turn. Fields not available in OTEL: has_thinking, stop_reason,
+  service_tier, speed, cache_creation breakdown (ephemeral_1h vs 5m)
 */
 
 import {
@@ -327,6 +333,43 @@ export const derivedContributorImpact = pgTable(
         table.contributorType,
         table.contributorName,
         table.dateBucket
+      )
+    };
+  }
+);
+
+export const sessionTurnDetails = pgTable(
+  'session_turn_details',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sessionId: text('session_id').notNull(),
+    turnIndex: integer('turn_index').notNull(),
+    timestamp: timestamp('timestamp', {
+      withTimezone: true
+    }).notNull(),
+    modelName: text('model_name'),
+    stopReason: text('stop_reason'),
+    hasThinking: boolean('has_thinking').notNull(),
+    serviceTier: text('service_tier'),
+    speed: text('speed'),
+    inputTokens: bigint('input_tokens', { mode: 'number' }),
+    outputTokens: bigint('output_tokens', { mode: 'number' }),
+    cacheCreationInputTokens: bigint('cache_creation_input_tokens', { mode: 'number' }),
+    cacheReadInputTokens: bigint('cache_read_input_tokens', { mode: 'number' }),
+    cacheCreationEphemeral1hTokens: bigint('cache_creation_ephemeral_1h_tokens', { mode: 'number' }),
+    cacheCreationEphemeral5mTokens: bigint('cache_creation_ephemeral_5m_tokens', { mode: 'number' }),
+    toolUseCount: integer('tool_use_count').notNull(),
+    toolNames: jsonb('tool_names').notNull()
+  },
+  (table) => {
+    return {
+      turnUnique: unique('session_turn_details_session_id_turn_index_unique').on(
+        table.sessionId,
+        table.turnIndex
+      ),
+      sessionTimestampIndex: index('session_turn_details_session_id_timestamp_index').on(
+        table.sessionId,
+        table.timestamp
       )
     };
   }

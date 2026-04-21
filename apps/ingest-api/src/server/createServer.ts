@@ -9,6 +9,7 @@ import { registerHealthRoute } from '../health/index.js';
 import { registerPromptFactsRoute } from '../prompt-facts/index.js';
 import { createSessionStore } from '../session-store/index.js';
 import { registerSessionsRoute } from '../sessions/index.js';
+import { registerSessionTurnDetailsRoute } from '../session-turn-details/index.js';
 import { registerStatuslineSnapshotsRoute } from '../statusline-snapshots/index.js';
 import { registerToolImpactRoute } from '../tool-impact/index.js';
 
@@ -45,6 +46,7 @@ export function createServer(input: {
   registerPromptFactsRoute(server, sessionStore, requireAuthorization);
   registerToolImpactRoute(server, sessionStore, requireAuthorization);
   registerContributorImpactRoute(server, sessionStore, requireAuthorization);
+  registerSessionTurnDetailsRoute(server, input.database, requireAuthorization);
 
   return server;
 }

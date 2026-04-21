@@ -187,6 +187,89 @@ if [[ -n "$AUTH_TOKEN" ]]; then
   curl_args+=(-H "Authorization: Bearer $AUTH_TOKEN")
 fi
 
-printf '%s' "$context_payload" | curl "${curl_args[@]}" \
-  --data-binary @- \
-  "${API_URL}/v1/context-snapshots"
+post_json() {
+  local endpoint="$1"
+  printf '%s' "$2" | curl "${curl_args[@]}" \
+    --data-binary @- \
+    "${API_URL}${endpoint}"
+}
+
+post_json "/v1/context-snapshots" "$context_payload"
+
+# --- 2. Turn details (per-turn transcript metrics) ---
+
+turn_details=$(python3 - "$SESSION_ID" "$TRANSCRIPT_PATH" <<'PY'
+import sys, json
+
+session_id = sys.argv[1]
+transcript_path = sys.argv[2]
+
+turns = []
+turn_index = 0
+
+with open(transcript_path, "r") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if entry.get("type") != "assistant":
+            continue
+
+        msg = entry.get("message", {})
+        usage = msg.get("usage")
+        if not usage:
+            continue
+
+        ts = entry.get("timestamp")
+        if not ts:
+            continue
+
+        has_thinking = False
+        tool_use_count = 0
+        tool_names = []
+        for block in msg.get("content", []):
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "thinking":
+                has_thinking = True
+            if block.get("type") == "tool_use":
+                tool_use_count += 1
+                tool_names.append(block.get("name", "unknown"))
+
+        cache_creation = usage.get("cache_creation", {})
+
+        turns.append({
+            "turn_index": turn_index,
+            "timestamp": ts,
+            "model_name": msg.get("model"),
+            "stop_reason": msg.get("stop_reason"),
+            "has_thinking": has_thinking,
+            "service_tier": usage.get("service_tier"),
+            "speed": usage.get("speed"),
+            "input_tokens": usage.get("input_tokens"),
+            "output_tokens": usage.get("output_tokens"),
+            "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
+            "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
+            "cache_creation_ephemeral_1h_tokens": cache_creation.get("ephemeral_1h_input_tokens"),
+            "cache_creation_ephemeral_5m_tokens": cache_creation.get("ephemeral_5m_input_tokens"),
+            "tool_use_count": tool_use_count,
+            "tool_names": tool_names,
+        })
+        turn_index += 1
+
+if not turns:
+    print("")
+    sys.exit(0)
+
+print(json.dumps({"session_id": session_id, "turns": turns}))
+PY
+)
+
+if [[ -n "$turn_details" ]] && [[ "$turn_details" != "null" ]]; then
+  post_json "/v1/session-turn-details" "$turn_details"
+fi

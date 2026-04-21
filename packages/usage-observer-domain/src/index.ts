@@ -14,16 +14,19 @@ export {
   derivedPromptFacts,
   derivedToolImpact,
   sessions,
-  sessionSnapshots
+  sessionSnapshots,
+  sessionTurnDetails
 } from './database/schema/index.js';
 export {
   contextSnapshotsPayloadSchema,
   normalizeRawStatusline,
+  sessionTurnDetailsPayloadSchema,
   statuslineSnapshotPayloadSchema
 } from './ingest/index.js';
 export type {
   ContextSnapshotsPayload,
   RawStatusline,
+  SessionTurnDetailsPayload,
   StatuslineSnapshotPayload
 } from './ingest/index.js';
 export {
