@@ -1,0 +1,193 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select has_thinking, count(*) as turns, avg(output_tokens)::int as avg_output_tokens, avg(input_tokens)::int as avg_input_tokens, avg(cache_creation_input_tokens)::int as avg_cache_creation, avg(cache_read_input_tokens)::int as avg_cache_read from session_turn_details where $__timeFilter(timestamp) group by has_thinking order by has_thinking desc"
+        }
+      ],
+      "title": "Thinking vs Non-Thinking Turns",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "select $__timeGroupAlias(timestamp, '1h'), sum(case when has_thinking then 1 else 0 end) as thinking_turns, sum(case when has_thinking then 0 else 1 end) as non_thinking_turns from session_turn_details where $__timeFilter(timestamp) group by 1 order by 1"
+        }
+      ],
+      "title": "Thinking Usage Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select stop_reason, count(*) as turns, avg(output_tokens)::int as avg_output_tokens, avg(cache_read_input_tokens)::int as avg_cache_read from session_turn_details where $__timeFilter(timestamp) and stop_reason is not null group by stop_reason order by turns desc"
+        }
+      ],
+      "title": "Stop Reason Breakdown",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select f.session_id, count(distinct f.file_path) as files_modified, sum(f.version) as total_edits, s.total_cost_usd, s.total_input_tokens + s.total_output_tokens as total_tokens from session_file_changes f join (select session_id, max(total_cost_usd) as total_cost_usd, max(total_input_tokens) as total_input_tokens, max(total_output_tokens) as total_output_tokens from session_snapshots group by session_id) s on f.session_id = s.session_id group by f.session_id, s.total_cost_usd, s.total_input_tokens, s.total_output_tokens order by total_edits desc limit 50"
+        }
+      ],
+      "title": "Files Modified vs Cost Per Session",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "usage-postgres"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "usage-postgres"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select service_tier, speed, count(*) as turns, avg(output_tokens)::int as avg_output, avg(cache_read_input_tokens)::int as avg_cache_read, avg(cache_creation_ephemeral_1h_tokens)::int as avg_1h_cache, avg(cache_creation_ephemeral_5m_tokens)::int as avg_5m_cache from session_turn_details where $__timeFilter(timestamp) group by service_tier, speed order by turns desc"
+        }
+      ],
+      "title": "Service Tier and Speed Distribution",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "claude-code",
+    "usage-observer"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "time_options": [
+      "24h",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "utc",
+  "title": "Session Insights",
+  "uid": "usage-session-insights",
+  "version": 1
+}
