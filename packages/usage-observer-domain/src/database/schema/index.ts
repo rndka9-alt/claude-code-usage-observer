@@ -3,6 +3,7 @@ export {
   derivedContributorImpact,
   derivedPromptFacts,
   derivedToolImpact,
+  sessionFileChanges,
   sessions,
   sessionSnapshots,
   sessionTurnDetails

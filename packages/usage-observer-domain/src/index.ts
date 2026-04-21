@@ -13,6 +13,7 @@ export {
   derivedContributorImpact,
   derivedPromptFacts,
   derivedToolImpact,
+  sessionFileChanges,
   sessions,
   sessionSnapshots,
   sessionTurnDetails
@@ -20,12 +21,14 @@ export {
 export {
   contextSnapshotsPayloadSchema,
   normalizeRawStatusline,
+  sessionFileChangesPayloadSchema,
   sessionTurnDetailsPayloadSchema,
   statuslineSnapshotPayloadSchema
 } from './ingest/index.js';
 export type {
   ContextSnapshotsPayload,
   RawStatusline,
+  SessionFileChangesPayload,
   SessionTurnDetailsPayload,
   StatuslineSnapshotPayload
 } from './ingest/index.js';

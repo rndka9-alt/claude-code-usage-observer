@@ -33,6 +33,12 @@ session_turn_details
   Ingested via: POST /v1/session-turn-details
   One row per assistant turn. Fields not available in OTEL: has_thinking, stop_reason,
   service_tier, speed, cache_creation breakdown (ephemeral_1h vs 5m)
+
+session_file_changes
+  Source: transcript file-history-snapshot entries, parsed at SessionEnd by hook
+  Ingested via: POST /v1/session-file-changes
+  One row per modified file per session. version = number of times Claude edited the file
+  backupTime = when the file was first tracked in this session
 */
 
 import {
@@ -371,6 +377,29 @@ export const sessionTurnDetails = pgTable(
         table.sessionId,
         table.timestamp
       )
+    };
+  }
+);
+
+export const sessionFileChanges = pgTable(
+  'session_file_changes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sessionId: text('session_id').notNull(),
+    filePath: text('file_path').notNull(),
+    fileName: text('file_name').notNull(),
+    version: integer('version').notNull(),
+    backupTime: timestamp('backup_time', {
+      withTimezone: true
+    }).notNull()
+  },
+  (table) => {
+    return {
+      fileChangeUnique: unique('session_file_changes_session_id_file_path_unique').on(
+        table.sessionId,
+        table.filePath
+      ),
+      sessionIndex: index('session_file_changes_session_id_index').on(table.sessionId)
     };
   }
 );

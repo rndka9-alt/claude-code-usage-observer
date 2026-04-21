@@ -11,11 +11,17 @@ export {
   statuslineSnapshotPayloadSchema
 } from './statuslineSnapshotPayloadSchema.js';
 export {
+  sessionFileChangesPayloadSchema
+} from './sessionFileChangesPayloadSchema.js';
+export {
   sessionTurnDetailsPayloadSchema
 } from './sessionTurnDetailsPayloadSchema.js';
 export type {
   ContextSnapshotsPayload
 } from './contextSnapshotsPayloadSchema.js';
+export type {
+  SessionFileChangesPayload
+} from './sessionFileChangesPayloadSchema.js';
 export type {
   SessionTurnDetailsPayload
 } from './sessionTurnDetailsPayloadSchema.js';

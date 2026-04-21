@@ -273,3 +273,64 @@ PY
 if [[ -n "$turn_details" ]] && [[ "$turn_details" != "null" ]]; then
   post_json "/v1/session-turn-details" "$turn_details"
 fi
+
+# --- 3. File changes (modified files from file-history-snapshot) ---
+
+file_changes=$(python3 - "$SESSION_ID" "$TRANSCRIPT_PATH" <<'PY'
+import sys, json, os
+
+session_id = sys.argv[1]
+transcript_path = sys.argv[2]
+
+latest_tracked = {}
+
+with open(transcript_path, "r") as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if entry.get("type") != "file-history-snapshot":
+            continue
+
+        snapshot = entry.get("snapshot", {})
+        tracked = snapshot.get("trackedFileBackups", {})
+        if not isinstance(tracked, dict):
+            continue
+
+        for path, backup in tracked.items():
+            if not isinstance(backup, dict):
+                continue
+            version = backup.get("version")
+            backup_time = backup.get("backupTime")
+            if version is None or backup_time is None:
+                continue
+            latest_tracked[path] = {
+                "version": version,
+                "backup_time": backup_time,
+            }
+
+if not latest_tracked:
+    print("")
+    sys.exit(0)
+
+files = []
+for path, info in sorted(latest_tracked.items()):
+    files.append({
+        "file_path": path,
+        "file_name": os.path.basename(path),
+        "version": info["version"],
+        "backup_time": info["backup_time"],
+    })
+
+print(json.dumps({"session_id": session_id, "files": files}))
+PY
+)
+
+if [[ -n "$file_changes" ]] && [[ "$file_changes" != "null" ]]; then
+  post_json "/v1/session-file-changes" "$file_changes"
+fi
