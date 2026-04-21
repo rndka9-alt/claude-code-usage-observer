@@ -79,11 +79,43 @@ const rawStatuslineSchema = z
 
 export type RawStatusline = z.infer<typeof rawStatuslineSchema>;
 
+const mappedTopLevelKeys = new Set([
+  'session_id',
+  'timestamp',
+  'project_id',
+  'project_root',
+  'cwd',
+  'pwd',
+  'git_branch',
+  'transcript_path',
+  'model_name',
+  'model',
+  'context_window',
+  'cache_creation_input_tokens',
+  'cache_read_input_tokens',
+  'cost',
+  'duration_ms',
+  'rate_limits',
+  'source'
+]);
+
+function warnUnmappedFields(raw: Record<string, unknown>): void {
+  const unmapped = Object.keys(raw).filter(
+    (key) => mappedTopLevelKeys.has(key) === false
+  );
+
+  if (unmapped.length > 0) {
+    console.warn(`unmapped statusline fields: ${unmapped.join(', ')}`);
+  }
+}
+
 export function normalizeRawStatusline(
   rawStatusline: unknown,
   capturedAt: Date
 ): StatuslineSnapshotPayload {
   const parsed = rawStatuslineSchema.parse(rawStatusline);
+
+  warnUnmappedFields(parsed as Record<string, unknown>);
 
   const cacheCreation =
     parsed.context_window?.current_usage?.cache_creation_input_tokens ??

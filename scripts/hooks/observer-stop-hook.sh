@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sends a status-line snapshot and context snapshot to ingest-api on every Stop event.
+# Sends a status-line snapshot to ingest-api on every Stop (per-turn) event.
 # Receives hook input JSON on stdin with session_id, transcript_path, and cwd.
 
 set -eu
@@ -21,26 +21,6 @@ GIT_BRANCH=""
 if [[ -n "$CWD" ]] && [[ -d "$CWD/.git" || -f "$CWD/.git" ]]; then
   GIT_BRANCH="$(git -C "$CWD" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 fi
-
-curl_args=(
-  --silent --show-error
-  --max-time 5
-  -X POST
-  -H 'Content-Type: application/json'
-)
-
-if [[ -n "$AUTH_TOKEN" ]]; then
-  curl_args+=(-H "Authorization: Bearer $AUTH_TOKEN")
-fi
-
-post_json() {
-  local endpoint="$1"
-  printf '%s' "$2" | curl "${curl_args[@]}" \
-    --data-binary @- \
-    "${API_URL}${endpoint}"
-}
-
-# --- 1. Statusline snapshot (transcript-based) ---
 
 snapshot=$(python3 - "$TRANSCRIPT_PATH" "$SESSION_ID" "$CWD" "$GIT_BRANCH" <<'PY'
 import sys, json
@@ -106,139 +86,21 @@ print(json.dumps(payload))
 PY
 )
 
-if [[ -n "$snapshot" ]] && [[ "$snapshot" != "null" ]]; then
-  post_json "/v1/statusline-snapshots" "$snapshot"
+if [[ -z "$snapshot" ]] || [[ "$snapshot" == "null" ]]; then
+  exit 0
 fi
 
-# --- 2. Context snapshot (contributor discovery) ---
-
-context_payload=$(python3 - "$SESSION_ID" "$CWD" "$GIT_BRANCH" "$TRANSCRIPT_PATH" <<'PY'
-import sys, json, hashlib, os
-from datetime import datetime, timezone
-
-session_id = sys.argv[1]
-cwd = sys.argv[2]
-git_branch = sys.argv[3] if len(sys.argv) > 3 else ""
-transcript_path = sys.argv[4] if len(sys.argv) > 4 else ""
-
-captured_at = datetime.now(timezone.utc).isoformat()
-contributors = []
-
-
-def file_contributor(contributor_type, name, scope, path, extra_metadata=None):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-        st = os.stat(path)
-        line_count = len(content.split("\n")) if content else 0
-        file_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        meta = {"file_path": path}
-        if extra_metadata:
-            meta.update(extra_metadata)
-        return {
-            "contributor_type": contributor_type,
-            "contributor_name": name,
-            "contributor_scope": scope,
-            "contributor_hash": file_hash,
-            "file_path": path,
-            "file_size_bytes": st.st_size,
-            "line_count": line_count,
-            "enabled": True,
-            "metadata_json": meta,
-        }
-    except (OSError, UnicodeDecodeError):
-        return None
-
-
-def metadata_contributor(contributor_type, name, scope, metadata):
-    serialized = json.dumps(metadata, sort_keys=True, separators=(",", ":"))
-    return {
-        "contributor_type": contributor_type,
-        "contributor_name": name,
-        "contributor_scope": scope,
-        "contributor_hash": hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
-        "file_path": None,
-        "file_size_bytes": None,
-        "line_count": None,
-        "enabled": True,
-        "metadata_json": metadata,
-    }
-
-
-# CLAUDE.md files
-claude_md_candidates = []
-home = os.path.expanduser("~")
-
-# global
-claude_md_candidates.append((os.path.join(home, ".claude", "CLAUDE.md"), "global"))
-# project root
-if cwd:
-    claude_md_candidates.append((os.path.join(cwd, "CLAUDE.md"), "project"))
-    claude_md_candidates.append((os.path.join(cwd, ".claude", "CLAUDE.md"), "project"))
-
-for path, scope in claude_md_candidates:
-    c = file_contributor("claude_md", path, scope, path)
-    if c:
-        contributors.append(c)
-
-# Rule files (.claude/rules/ directory)
-if cwd:
-    rules_dir = os.path.join(cwd, ".claude", "rules")
-    if os.path.isdir(rules_dir):
-        for fname in sorted(os.listdir(rules_dir)):
-            fpath = os.path.join(rules_dir, fname)
-            if os.path.isfile(fpath):
-                c = file_contributor("rule", fpath, "project", fpath)
-                if c:
-                    contributors.append(c)
-
-# Model name from transcript
-model_name = None
-if transcript_path and os.path.isfile(transcript_path):
-    with open(transcript_path, "r") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if entry.get("type") == "assistant":
-                m = entry.get("message", {}).get("model")
-                if m:
-                    model_name = m
-
-# Project state
-if cwd or git_branch:
-    contributors.append(
-        metadata_contributor(
-            "project_state",
-            cwd or "project-state",
-            "session",
-            {"project_root": cwd or None, "git_branch": git_branch or None},
-        )
-    )
-
-if not contributors:
-    print("")
-    sys.exit(0)
-
-payload = {
-    "session_id": session_id,
-    "captured_at": captured_at,
-    "project_root": cwd or None,
-    "git_branch": git_branch or None,
-    "transcript_path": transcript_path or None,
-    "model_name": model_name,
-    "source": "context-snapshot",
-    "contributors": contributors,
-}
-
-print(json.dumps(payload))
-PY
+curl_args=(
+  --silent --show-error
+  --max-time 5
+  -X POST
+  -H 'Content-Type: application/json'
 )
 
-if [[ -n "$context_payload" ]] && [[ "$context_payload" != "null" ]]; then
-  post_json "/v1/context-snapshots" "$context_payload"
+if [[ -n "$AUTH_TOKEN" ]]; then
+  curl_args+=(-H "Authorization: Bearer $AUTH_TOKEN")
 fi
+
+printf '%s' "$snapshot" | curl "${curl_args[@]}" \
+  --data-binary @- \
+  "${API_URL}/v1/statusline-snapshots"
