@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { readContextCommandInput, runContextCommand } from './context/index.js';
 import { postJson } from './http/index.js';
-import { readStatuslineCommandInput, normalizeStatuslineSnapshot } from './statusline/index.js';
 
 async function main(): Promise<void> {
   const command = process.argv[2];
@@ -14,17 +13,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (typeof command !== 'undefined' && command !== 'statusline') {
-    throw new Error(`Unknown command: ${command}`);
-  }
-
-  const statuslineCommandInput = readStatuslineCommandInput(process.argv.slice(command === 'statusline' ? 3 : 2), process.env);
-  const rawInput = await readAllStandardInput();
-  const parsedInput: unknown = JSON.parse(rawInput);
-  const payload = normalizeStatuslineSnapshot(parsedInput, statuslineCommandInput.now);
-
-  await postJson(statuslineCommandInput.apiUrl, '/v1/statusline-snapshots', payload, statuslineCommandInput.authToken);
-  process.stdout.write(`${JSON.stringify({ accepted: true, session_id: payload.session_id })}\n`);
+  throw new Error(`Unknown command: ${command ?? '(none)'}`);
 }
 
 async function readAllStandardInput(): Promise<string> {
