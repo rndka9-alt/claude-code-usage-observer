@@ -102,8 +102,9 @@ if cwd:
                 if c:
                     contributors.append(c)
 
-# Model name from transcript
+# Model name and MCP servers from transcript
 model_name = None
+mcp_servers = set()
 if transcript_path and os.path.isfile(transcript_path):
     with open(transcript_path, "r") as f:
         for line in f:
@@ -114,10 +115,32 @@ if transcript_path and os.path.isfile(transcript_path):
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if entry.get("type") == "assistant":
-                m = entry.get("message", {}).get("model")
-                if m:
-                    model_name = m
+            if entry.get("type") != "assistant":
+                continue
+            msg = entry.get("message", {})
+            m = msg.get("model")
+            if m:
+                model_name = m
+            for block in msg.get("content", []):
+                if not isinstance(block, dict):
+                    continue
+                if block.get("type") != "tool_use":
+                    continue
+                name = block.get("name", "")
+                if name.startswith("mcp__"):
+                    parts = name.split("__")
+                    if len(parts) >= 2:
+                        mcp_servers.add(parts[1])
+
+for server_name in sorted(mcp_servers):
+    contributors.append(
+        metadata_contributor(
+            "mcp_server",
+            server_name,
+            "session",
+            {"mcp_server_name": server_name, "source": "transcript"},
+        )
+    )
 
 # Project state
 if cwd or git_branch:

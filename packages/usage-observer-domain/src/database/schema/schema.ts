@@ -1,3 +1,34 @@
+/*
+Data source map
+===============
+
+sessions, session_snapshots
+  Source: Claude Code statusline JSON (realtime, 30s throttle) + Stop hook transcript parsing
+  Ingested via: POST /v1/statusline-snapshots -> normalizeRawStatusline()
+  Fields from statusline: cost, rate_limits, context_window, model, cwd, transcript_path
+  Fields from Stop hook: transcript-derived token totals (fallback when statusline fields are absent)
+
+context_snapshots
+  Source: SessionEnd hook (once per session) + worker Loki event extraction
+  Hook contributors: CLAUDE.md files (global/project), .claude/rules/ files, project_state, MCP servers (from transcript mcp__ tool names)
+  Loki contributors: skill_activated events, mcp_server_connection events
+  contributorType values: claude_md, rule, project_state, skill, mcp_server
+
+derived_prompt_facts
+  Source: Loki OTEL events (api_request, user_prompt, tool_result)
+  Derived by: worker -> derivePromptFacts() every 5min, full reindex from 7d window
+  Groups api_request/tool_result events by (session_id, prompt_id)
+
+derived_tool_impact
+  Source: derived_prompt_facts + Loki tool_result events
+  Derived by: worker -> toolImpactPipeline, date-bucketed replace
+
+derived_contributor_impact
+  Source: derived_prompt_facts + context_snapshots (DB + Loki-synthesized)
+  Derived by: worker -> contributorImpactPipeline, date-bucketed replace
+  Correlation only: matches prompt to the latest context snapshot before prompt start
+*/
+
 import {
   bigint,
   boolean,
