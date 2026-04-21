@@ -4,19 +4,8 @@
 
 set -eu
 
-REPO_ROOT="${USAGE_OBSERVER_REPO_ROOT:-}"
 API_URL="${USAGE_OBSERVER_API_URL:-http://127.0.0.1:20008}"
 AUTH_TOKEN="${USAGE_OBSERVER_AUTH_TOKEN:-}"
-
-if [[ -z "$REPO_ROOT" ]]; then
-  exit 0
-fi
-
-SENDER="$REPO_ROOT/scripts/statusline-sender/dist/index.js"
-
-if [[ ! -f "$SENDER" ]]; then
-  exit 0
-fi
 
 hook_input=$(cat)
 
@@ -89,9 +78,11 @@ payload = {
     "context_window": {
         "total_input_tokens": total_input,
         "total_output_tokens": total_output,
+        "current_usage": {
+            "cache_creation_input_tokens": total_cache_create,
+            "cache_read_input_tokens": total_cache_read,
+        },
     },
-    "cache_creation_input_tokens": total_cache_create,
-    "cache_read_input_tokens": total_cache_read,
     "source": "statusline"
 }
 
@@ -104,7 +95,17 @@ if [[ -z "$snapshot" ]] || [[ "$snapshot" == "null" ]]; then
   exit 0
 fi
 
-export USAGE_OBSERVER_API_URL="$API_URL"
-export USAGE_OBSERVER_AUTH_TOKEN="$AUTH_TOKEN"
+curl_args=(
+  --silent --show-error
+  --max-time 5
+  -X POST
+  -H 'Content-Type: application/json'
+)
 
-printf '%s' "$snapshot" | node "$SENDER" statusline >/dev/null 2>&1 || true
+if [[ -n "$AUTH_TOKEN" ]]; then
+  curl_args+=(-H "Authorization: Bearer $AUTH_TOKEN")
+fi
+
+printf '%s' "$snapshot" | curl "${curl_args[@]}" \
+  --data-binary @- \
+  "${API_URL}/v1/statusline-snapshots"

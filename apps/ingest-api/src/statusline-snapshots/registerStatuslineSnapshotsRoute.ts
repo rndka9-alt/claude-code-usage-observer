@@ -1,4 +1,4 @@
-import { statuslineSnapshotPayloadSchema } from '@usage-observer/domain';
+import { normalizeRawStatusline } from '@usage-observer/domain';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { createSessionStore } from '../session-store/index.js';
@@ -20,7 +20,7 @@ export function registerStatuslineSnapshotsRoute(
       preHandler: requireAuthorization
     },
     async (request, reply) => {
-      const payload = statuslineSnapshotPayloadSchema.parse(request.body);
+      const payload = normalizeRawStatusline(request.body, new Date());
       await sessionStore.ingestStatuslineSnapshot(payload);
 
       reply.code(202).send({

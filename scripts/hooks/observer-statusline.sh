@@ -4,7 +4,6 @@
 
 set -u
 
-REPO_ROOT="${USAGE_OBSERVER_REPO_ROOT:-}"
 API_URL="${USAGE_OBSERVER_API_URL:-http://127.0.0.1:20008}"
 AUTH_TOKEN="${USAGE_OBSERVER_AUTH_TOKEN:-}"
 ORIGINAL_CMD="${USAGE_OBSERVER_ORIGINAL_STATUSLINE_CMD:-}"
@@ -14,12 +13,6 @@ THROTTLE_DIR="/tmp/claude-observer-statusline"
 input=$(cat)
 
 forward_to_ingest() {
-  local sender="$REPO_ROOT/scripts/statusline-sender/dist/index.js"
-
-  if [[ ! -f "$sender" ]]; then
-    return 0
-  fi
-
   mkdir -p "$THROTTLE_DIR"
 
   local session_id
@@ -43,15 +36,24 @@ forward_to_ingest() {
 
   printf '%s' "$now" > "$stamp_file"
 
-  export USAGE_OBSERVER_API_URL="$API_URL"
-  export USAGE_OBSERVER_AUTH_TOKEN="$AUTH_TOKEN"
+  local curl_args=(
+    --silent --show-error
+    --max-time 5
+    -X POST
+    -H 'Content-Type: application/json'
+  )
 
-  printf '%s' "$input" | node "$sender" statusline >/dev/null 2>&1 &
+  if [[ -n "$AUTH_TOKEN" ]]; then
+    curl_args+=(-H "Authorization: Bearer $AUTH_TOKEN")
+  fi
+
+  printf '%s' "$input" | curl "${curl_args[@]}" \
+    --data-binary @- \
+    "${API_URL}/v1/statusline-snapshots" \
+    >/dev/null &
 }
 
-if [[ -n "$REPO_ROOT" ]]; then
-  forward_to_ingest
-fi
+forward_to_ingest
 
 if [[ -n "$ORIGINAL_CMD" ]]; then
   printf '%s' "$input" | eval "$ORIGINAL_CMD"

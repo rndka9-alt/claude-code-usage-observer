@@ -29,7 +29,9 @@ function parseJsonLine(line: string): unknown | null {
   try {
     const parsedLine: unknown = JSON.parse(trimmedLine);
     return parsedLine;
-  } catch {
+  } catch (error: unknown) {
+    const preview = trimmedLine.length > 120 ? `${trimmedLine.slice(0, 120)}…` : trimmedLine;
+    console.warn(`Skipping malformed JSON line: ${preview}`, error);
     return null;
   }
 }

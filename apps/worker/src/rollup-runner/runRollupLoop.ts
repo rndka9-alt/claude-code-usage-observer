@@ -196,6 +196,8 @@ export async function runRollupLoop(input: {
   rollupIntervalMs: number;
   runOnce: boolean;
 }): Promise<void> {
+  let consecutiveFailures = 0;
+
   do {
     try {
       await runRollupCycle({
@@ -203,13 +205,16 @@ export async function runRollupLoop(input: {
         lokiBaseUrl: input.lokiBaseUrl,
         lookbackRange: input.lookbackRange
       });
+      consecutiveFailures = 0;
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-        console.error(error.stack);
-      } else {
-        console.error('Unknown rollup cycle error');
-        console.error(error);
+      consecutiveFailures += 1;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error(
+        `Rollup cycle failed (${consecutiveFailures} consecutive): ${errorMessage}`
+      );
+      if (errorStack !== undefined) {
+        console.error(errorStack);
       }
     }
 

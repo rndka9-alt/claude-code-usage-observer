@@ -18,10 +18,12 @@ export {
 } from './database/schema/index.js';
 export {
   contextSnapshotsPayloadSchema,
+  normalizeRawStatusline,
   statuslineSnapshotPayloadSchema
 } from './ingest/index.js';
 export type {
   ContextSnapshotsPayload,
+  RawStatusline,
   StatuslineSnapshotPayload
 } from './ingest/index.js';
 export {
