@@ -129,7 +129,7 @@ If it is large enough to deserve structure, give it its own entry point even whe
 
 ## Verification And Reporting
 
-- After making changes, run `pnpm test` to verify both type errors and tests before reporting completion.
+- After making changes, run `pnpm test` to verify lint, type errors, and tests before reporting completion. `pnpm test` runs `pnpm lint` → `pnpm typecheck` → domain build → vitest sequentially.
 - If `pnpm test` cannot be run, or if it fails, report that clearly instead of implying the work is fully verified.
 - If you discover type errors, test failures, or worktree changes that were not caused by the current session's work, report them to the user explicitly.
 - Do not silently overwrite, revert, or "clean up" unrelated changes just to make the current task pass.

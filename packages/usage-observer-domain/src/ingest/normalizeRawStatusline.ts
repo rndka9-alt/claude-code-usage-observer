@@ -99,7 +99,7 @@ const mappedTopLevelKeys = new Set([
   'source'
 ]);
 
-function warnUnmappedFields(raw: Record<string, unknown>): void {
+function warnUnmappedFields(raw: RawStatusline): void {
   const unmapped = Object.keys(raw).filter(
     (key) => mappedTopLevelKeys.has(key) === false
   );
@@ -115,7 +115,7 @@ export function normalizeRawStatusline(
 ): StatuslineSnapshotPayload {
   const parsed = rawStatuslineSchema.parse(rawStatusline);
 
-  warnUnmappedFields(parsed as Record<string, unknown>);
+  warnUnmappedFields(parsed);
 
   const cacheCreation =
     parsed.context_window?.current_usage?.cache_creation_input_tokens ??
