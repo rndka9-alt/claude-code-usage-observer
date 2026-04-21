@@ -117,6 +117,11 @@ if [[ "$SKIP_HEALTH_CHECK" != "true" ]]; then
   check_health "ingest-api" "$USAGE_OBSERVER_API_HEALTH_URL"
 fi
 
+export USAGE_OBSERVER_REPO_ROOT="$REPO_ROOT"
+export USAGE_OBSERVER_ORIGINAL_STATUSLINE_CMD="${USAGE_OBSERVER_ORIGINAL_STATUSLINE_CMD:-~/.claude/statusline.sh}"
+
+OBSERVER_SETTINGS="$REPO_ROOT/scripts/observer-hooks-settings.json"
+
 case "$TARGET_COMMAND" in
   *claude-code-with-emotion/bin/claude)
     EMOTION_BIN_DIR="$(CDPATH='' cd -- "$(dirname -- "$TARGET_COMMAND")" && pwd)"
@@ -132,4 +137,4 @@ case "$TARGET_COMMAND" in
 esac
 
 printf 'Launching %s with usage observer OTEL exports.\n' "$TARGET_COMMAND" >&2
-exec "$TARGET_COMMAND" "$@"
+exec "$TARGET_COMMAND" --settings "$OBSERVER_SETTINGS" "$@"
